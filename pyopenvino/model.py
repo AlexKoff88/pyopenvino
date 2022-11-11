@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import openvino.runtime as ov
 from openvino.offline_transformations import compress_model_transformation
 
@@ -10,7 +12,14 @@ class Model():
         self._config = None
 
     @classmethod
-    def from_file(cls, file_name: str):
+    def from_file(cls, file_name: str) -> Model:
+        """
+        Creates Model from file 
+
+        Arguments:
+            file_name (`str`):
+                File with model (.xml, .onnx, .pb)
+        """
         core = ov.Core()
         model = core.read_model(model=file_name)
         return cls(model)
@@ -23,7 +32,7 @@ class Model():
         result = {next(iter(output.names)): value for (output, value) in infer_result.items()}
         return result
     
-    def to(self, device: str, config: dict=None):
+    def to(self, device: str, config: dict=None) -> Model:
         """
         Select inference device and settings
 
@@ -38,7 +47,7 @@ class Model():
         self._compiled_model = None
         return self
 
-    def half(self):
+    def half(self) -> Model:
         """
         Lower weights precision to FP16. GPU switches to FP16 inference
         """
@@ -55,6 +64,11 @@ class Model():
                 File to store the model. Should contain .xml extension.
         """
         ov.serialize(self._model, file_name)
+
+    def compile(self) -> ov.CompiledModel:
+        if not self._compiled_model:
+            self._compiled_model = self._core.compile_model(self._model, self._device, self._config)
+        return self._compiled_model
 
     def __getattr__(self, attr):
         if attr in self.__dict__:

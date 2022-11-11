@@ -7,6 +7,7 @@ import openvino.runtime as ov
 import pyopenvino as pyov
 
 MODEL_LOCAL_PATH="mobilenet_v2.onnx"
+INFERENCE_NUMBER=10
 
 def get_onnx_model(model):
     dummy_input = torch.randn(1, 3, 224, 224)
@@ -20,26 +21,21 @@ torch_model.eval()
 input = np.random.randint(255, size=(1,3,224,224), dtype=np.uint8).astype(float)
 get_onnx_model(torch_model)
 
-## Create from file
+
+results = [False for _ in range(INFERENCE_NUMBER)] # container for results
+def callback(request, userdata):
+    print(f"Done! Number: {userdata}")
+    results[userdata] = True
+
+## Create Model from file
 model = pyov.Model.from_file(MODEL_LOCAL_PATH)
-result = model(input)
-print(f"From file: {np.argmax(result['output'])}")
+## Create queue with four workers
+queue = pyov.InferQueue(model, callback, 4)
 
-## Create from openvino.runtime.Model
-ov_model = ov.Core().read_model(MODEL_LOCAL_PATH)
-model = pyov.Model(ov_model)
-result = model(input)
-print(f"From model: {np.argmax(result['output'])}")
+## Run parallel inference
+for i in range(INFERENCE_NUMBER):
+    queue.send_request(input, userdata=i)
 
-## Select inference device and seetings
-config = {"PERFORMANCE_HINT": "THROUGHPUT",
-        "INFERENCE_PRECISION_HINT": "f32"}
-model.to("CPU", config)
+queue.wait_all()
 
-## Lower weights precision to FP16. GPU switches to FP16 inference
-model.half()
-result = model(input)
-print(f"FP16 weights: {np.argmax(result['output'])}")
-
-## Save to file
-model.save("tmp.xml")
+assert all(results)
