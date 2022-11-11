@@ -29,13 +29,12 @@ def callback(request, userdata):
 
 ## Create Model from file
 model = pyov.Model.from_file(MODEL_LOCAL_PATH)
-## Create queue with four workers
-queue = pyov.InferQueue(model, callback, 4)
+model.workers = 4
 
 ## Run parallel inference
 for i in range(INFERENCE_NUMBER):
-    queue.send_request(input, userdata=i)
+    model.async_request(input, callback, userdata=i)
 
-queue.wait_all()
+model.wait()
 
 assert all(results)
