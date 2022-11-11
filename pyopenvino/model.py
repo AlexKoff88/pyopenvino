@@ -40,7 +40,6 @@ class Model():
             raise RuntimeError("Cannot run async inference. Callback is empty.")
         self._compile()
         self._create_queue()
-        print("start async")
         self._queue.start_async(inputs, userdata=userdata)
 
     def wait(self):
