@@ -50,7 +50,12 @@ class Model():
         self._workers = value
         self._queue = None # recreate queue
 
-    def set_callback(self, value):
+    @property
+    def callback(self):
+        return self._callback
+
+    @callback.setter
+    def callback(self, value):
         self._callback = value
         if self._queue:
             self._queue.set_callback(self._callback)
