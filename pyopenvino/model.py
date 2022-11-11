@@ -73,7 +73,7 @@ class Model():
     def __getattr__(self, attr):
         if attr in self.__dict__:
             return getattr(self, attr)
-        elif attr in self._model.__dict__:
+        elif attr in dir(self._model):
             self._compiled_model = None
             return getattr(self._model, attr)
         return getattr(self._compiled_model, attr)
