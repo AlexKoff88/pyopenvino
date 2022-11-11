@@ -21,19 +21,19 @@ torch_model.eval()
 input = np.random.randint(255, size=(1,3,224,224), dtype=np.uint8).astype(float)
 get_onnx_model(torch_model)
 
-
 results = [False for _ in range(INFERENCE_NUMBER)] # container for results
-def callback(request, userdata):
+def callback_fn(request, userdata):
     print(f"Done! Number: {userdata}")
     results[userdata] = True
 
 ## Create Model from file
 model = pyov.Model.from_file(MODEL_LOCAL_PATH)
 model.workers = 4
+model.set_callback(callback_fn)
 
 ## Run parallel inference
 for i in range(INFERENCE_NUMBER):
-    model.async_request(input, callback, userdata=i)
+    model.async_request(input, userdata=i)
 
 model.wait()
 
