@@ -4,10 +4,6 @@ import tempfile
 import requests
 import os
 
-import torch
-import torchvision.models as models
-
-import openvino.runtime as ov
 import pyopenvino as pyov
 
 MODEL_PATH = tempfile.NamedTemporaryFile(suffix=".onnx").name
