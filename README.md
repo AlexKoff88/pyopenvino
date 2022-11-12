@@ -6,7 +6,10 @@ Simplified Python API for OpenVINO
 python setup.py install
 ```
 
-## Run example
+## Run Example
 ```python
 python examples/simple_example.py
 ```
+
+## API Reference
+For more information about API, please refer to [API documentation](https://alexkoff88.github.io/pyopenvino/pyopenvino/index.html).
