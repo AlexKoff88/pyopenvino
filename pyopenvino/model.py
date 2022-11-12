@@ -12,6 +12,7 @@ class Model():
         - Move to device and apply inference options
         - Lower precision to FP16 (GPU inference)
         - Infer asynchcrounously to improve the throughput
+    See "examples" for usage details.
     """
     def __init__(self, model: ov.Model=None, workers=1):
         self._model = model
