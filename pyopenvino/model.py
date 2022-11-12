@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any
+from typing import Any, Union
 
 import openvino.runtime as ov
 from openvino.offline_transformations import compress_model_transformation
@@ -35,7 +35,16 @@ class Model():
         result = {next(iter(output.names)): value for (output, value) in infer_result.items()}
         return result
 
-    def async_request(self, inputs: dict, userdata=Any):
+    def async_request(self, inputs: Any, userdata=Any):
+        """
+        Send the asynchrounous inference request
+
+        Arguments:
+            inputs (dict, numpy.Array, torch.Tensor):
+                Device name, e.g. "CPU" or "GPU"
+            userdata:
+                User-defined object to track the request
+        """
         if not self._callback:
             raise RuntimeError("Cannot run async inference. Callback is empty.")
         self._compile()
@@ -43,15 +52,25 @@ class Model():
         self._queue.start_async(inputs, userdata=userdata)
 
     def wait(self):
+        """
+        Blocks the execution until all the asyncrounous requests are being processed
+        """
         if self._queue:
             self._queue.wait_all()
     
     def workers(self, value):
+        """
+        Number of parallel thread for asynchrounous inference processing
+        """
         self._workers = value
         self._queue = None # recreate queue
 
     @property
     def callback(self):
+        """
+        User-defined callback function to process results of 
+        asynchrounous inference
+        """
         return self._callback
 
     @callback.setter
