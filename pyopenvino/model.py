@@ -5,6 +5,14 @@ import openvino.runtime as ov
 from openvino.offline_transformations import compress_model_transformation
 
 class Model():
+    """
+    A helper class that provides a simple API to use OpenVINO for DL inference
+    Features:
+        - Load/save model
+        - Move to device and apply inference options
+        - Lower precision to FP16 (GPU inference)
+        - Infer asynchcrounously to improve the throughput
+    """
     def __init__(self, model: ov.Model=None, workers=1):
         self._model = model
         self._workers = workers
