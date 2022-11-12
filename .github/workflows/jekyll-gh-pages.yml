@@ -34,6 +34,11 @@ jobs:
         with:
           source: ./
           destination: ./_site
+      - name: Build with pdoc3
+        run: |
+          python -m pip install --upgrade pip
+          pip install pdoc3
+          pdoc --html -o ./_site pyopenvino
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
 
