@@ -36,6 +36,11 @@ config = {"PERFORMANCE_HINT": "THROUGHPUT",
         "INFERENCE_PRECISION_HINT": "f32"}
 model.to("CPU", config)
 
+## Reshape
+model.reshape([-1,3,224,224])
+result = model(input)
+print(f"Reshaped model: {np.argmax(result['output'])}")
+
 ## Lower weights precision to FP16. GPU switches to FP16 inference
 model.half()
 result = model(input)
