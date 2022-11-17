@@ -23,6 +23,7 @@ class Model():
         self._config = None
         self._queue = None
         self._callback = None
+        self._outputs_names_map = None
 
     @classmethod
     def from_file(cls, file_name: str) -> Model:
@@ -41,7 +42,13 @@ class Model():
         self._compile()
 
         infer_result = self._compiled_model(inputs)
-        result = {next(iter(output.names)): value for (output, value) in infer_result.items()}
+        
+        if self._outputs_names_map is None:
+            self._outputs_names_map = {}
+            for i, (output, _) in enumerate(infer_result.items()):
+                self._outputs_names_map[output] = f"output{i}" if len(output.names) == 0 else next(iter(output.names))
+
+        result = {self._outputs_names_map[output]: value for (output, value) in infer_result.items()}
         return result
 
     def async_request(self, inputs: Any, userdata=Any):
@@ -67,6 +74,16 @@ class Model():
         if self._queue:
             self._queue.wait_all()
     
+    @property
+    def native_model(self):
+        """
+        Accessor to ov.Model object
+
+        Returns:
+            ov.Model: ov.Model object
+        """
+        return self._model
+
     def workers(self, value):
         """
         Number of parallel thread for asynchrounous inference processing
@@ -81,6 +98,23 @@ class Model():
         asynchrounous inference
         """
         return self._callback
+
+    def get_operation(self, name):
+        """
+        Search for operation by its name
+
+        Arguments:
+            name (str):
+                Operation name
+        Returns:
+            Node: node in the openvino graph (pybind object)
+        """
+        result = None
+        for operation in self._model.get_ops():
+            if operation.get_friendly_name() == name:
+                result = operation
+                break
+        return result
 
     @callback.setter
     def callback(self, value):
@@ -108,7 +142,7 @@ class Model():
         Lower weights precision to FP16. GPU switches to FP16 inference
         """
         compress_model_transformation(self._model)
-        self._compiled_model = None
+        self._compiled_model = None 
         return self
 
     def save(self, file_name: str):
@@ -124,6 +158,7 @@ class Model():
     def _compile(self) -> ov.CompiledModel:
         if not self._compiled_model:
             self._compiled_model = self._core.compile_model(self._model, self._device, self._config)
+            self._outputs_names_map = None
         return self._compiled_model
 
     def _create_queue(self):

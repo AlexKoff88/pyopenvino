@@ -68,6 +68,12 @@ def test_save():
         model.save(tmp.name)
         assert os.path.exists(tmp.name)
 
+def test_get_operation():
+    download_model(MODEL_PATH)
+    model = pyov.Model.from_file(MODEL_PATH)
+    conv_name = "Conv_48/WithoutBiases"
+    operation = model.get_operation(conv_name)
+    assert operation.get_type_name() == "Convolution"
 
 @pytest.fixture(scope='session', autouse=True)
 def clean_up():
