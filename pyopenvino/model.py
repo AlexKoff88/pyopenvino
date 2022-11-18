@@ -116,6 +116,40 @@ class Model():
                 break
         return result
 
+    def get_output(self, name):
+        """
+        Search for result by its name
+
+        Arguments:
+            name (str):
+                Result name
+        Returns:
+            Node: node in the openvino graph (pybind object)
+        """
+        result = None
+        for operation in self._model.get_results():
+            if operation.get_friendly_name() == name:
+                result = operation
+                break
+        return result
+
+    def get_input(self, name):
+        """
+        Search for parameter (input node) by its name
+
+        Arguments:
+            name (str):
+                Result name
+        Returns:
+            Node: node in the openvino graph (pybind object)
+        """
+        result = None
+        for operation in self._model.get_parameters():
+            if operation.get_friendly_name() == name:
+                result = operation
+                break
+        return result
+
     @callback.setter
     def callback(self, value):
         self._callback = value
@@ -173,4 +207,6 @@ class Model():
         elif attr in dir(self._model):
             self._compiled_model = None
             return getattr(self._model, attr)
-        return getattr(self._compiled_model, attr)
+        elif self._compiled_model is not None:
+            return getattr(self._compiled_model, attr)
+        raise ValueError(f"Unknown attribute: {attr}")

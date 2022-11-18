@@ -14,12 +14,12 @@ class BaseLoss(ABC, Model):
         pass
 
 class L2Loss(BaseLoss):
-    def __init__(self, num_classes):
+    def __init__(self, target_shape):
         super(L2Loss, self).__init__()
 
         # Create subgraph for L2
-        input = opset9.parameter([1, num_classes], name="input")
-        target = opset9.parameter([1, num_classes], name="target")
+        input = opset9.parameter(target_shape, name="input")
+        target = opset9.parameter(target_shape, name="target")
         l2 = opset9.squared_difference(input, target, name="l2")
         shapeof = opset9.shape_of(l2, name="shape")
         shape_of_shape = opset9.shape_of(shapeof, name="shape_of_shape")
@@ -35,30 +35,25 @@ class L2Loss(BaseLoss):
         self._model = ov.Model([result], [input, target])
 
     def attach(self, model: Model, result_name: str) -> Model:
-        resulted_model = copy.deepcopy(model)
-        source_model = resulted_model.native_model()
+        #resulted_model = model #copy.deepcopy(model)
+        #source_model = resulted_model.native_model
+        param_node = self.get_input("input")
+        result_node = model.get_output(result_name)
+        param_node.output(0).replace(result_node.input(0).get_source_output())
 
-        result = resulted_model.get_operation(result_name)
-        input_node_output = result.inputs()[0].get_source_output()
+        new_params = list(model.get_parameters()) + [self.get_operation("target")]
+        new_results = [self.get_operation("l2_loss")]
 
-        loss_input = self.get_operation("input")
-        for target_in in loss_input.outputs()[0].get_target_inputs():
-            target_in.replace_source_output(input_node_output)
+        ov_model = ov.Model(new_results, new_params)
+        return Model(ov_model)
 
-        for sig_output in sigmoid_node.outputs():
-            for target_in in sig_output.get_target_inputs():
-                target_in.replace_source_output(input_node_output)
-
-
-
-        source_ouput_input = source_ouput_node.get_target_inputs(0)
-        l2 = self.get_operation("l2")
-        l2_param_input = l2.get_target_inputs(0)
-        l2_param_input.replace_source_output()
-        target_in = source_ouput_input.replace_source_output(l2)
-
-
-        for sig_output in source_model.outputs():
-            for target_in in sig_output.get_target_inputs():
-                target_in.replace_source_output(input_node_output)
+    def __getattr__(self, attr):
+        if attr in self.__dict__:
+            return getattr(self, attr)
+        elif attr in dir(self._model):
+            self._compiled_model = None
+            return getattr(self._model, attr)
+        elif self._compiled_model is not None:
+            return getattr(self._compiled_model, attr)
+        raise ValueError(f"Unknown attribute: {attr}")
 
