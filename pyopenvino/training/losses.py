@@ -35,8 +35,6 @@ class L2Loss(BaseLoss):
         self._model = ov.Model([result], [input, target])
 
     def attach(self, model: Model, result_name: str) -> Model:
-        #resulted_model = model #copy.deepcopy(model)
-        #source_model = resulted_model.native_model
         param_node = self.get_input("input")
         result_node = model.get_output(result_name)
         param_node.output(0).replace(result_node.input(0).get_source_output())

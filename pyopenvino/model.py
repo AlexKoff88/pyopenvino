@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Union
+from typing import Any, List, Union
 
 import openvino.runtime as ov
 from openvino.offline_transformations import compress_model_transformation
@@ -74,7 +74,6 @@ class Model():
         if self._queue:
             self._queue.wait_all()
     
-    @property
     def native_model(self):
         """
         Accessor to ov.Model object
@@ -116,6 +115,16 @@ class Model():
                 break
         return result
 
+    def get_output_names(self) -> List[str]:
+        """
+        Returns names of Result operations in the model
+
+        Returns:
+            List: names of Results
+        """
+        result = [r.get_friendly_name() for r in self._model.get_results()]
+        return result
+
     def get_output(self, name):
         """
         Search for result by its name
@@ -131,6 +140,16 @@ class Model():
             if operation.get_friendly_name() == name:
                 result = operation
                 break
+        return result
+
+    def get_input_names(self) -> List[str]:
+        """
+        Returns names of Parameter operations in the model
+
+        Returns:
+            List: names of Parameters
+        """
+        result = [p.get_friendly_name() for p in self._model.get_parameters()]
         return result
 
     def get_input(self, name):
